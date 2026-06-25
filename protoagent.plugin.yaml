@@ -1,0 +1,27 @@
+id: google
+name: Google Workspace
+version: 0.1.0
+description: >-
+  Google Workspace for the agent, built to grow. Ships Gmail (read + draft) and
+  Calendar (read) today — gmail_list_unread, gmail_search, gmail_get_thread,
+  gmail_create_draft (DRAFT ONLY — never sends), calendar_list_upcoming,
+  calendar_event_detail — over a service-agnostic OAuth/REST core (no SDK) so Drive,
+  Docs, and Sheets are additive modules, not a rewrite. Pull-mode: the agent reads
+  and drafts; a human reviews and sends. Needs a Google OAuth client + refresh token;
+  mint it with the full scope set you intend to grow into (e.g. gmail.modify,
+  calendar, drive, documents, spreadsheets).
+enabled: false
+capabilities:
+  network: [oauth2.googleapis.com, gmail.googleapis.com, www.googleapis.com]
+  filesystem: none
+
+config_section: google
+config:
+  client_id: ""
+  client_secret: ""
+  refresh_token: ""
+secrets: [client_secret, refresh_token]
+settings:
+  - { key: client_id, label: "OAuth client ID", type: string, description: "Google Cloud OAuth 2.0 client ID. Falls back to GOOGLE_CLIENT_ID." }
+  - { key: client_secret, label: "OAuth client secret", type: secret, description: "Stored in secrets.yaml. Falls back to GOOGLE_CLIENT_SECRET." }
+  - { key: refresh_token, label: "OAuth refresh token", type: secret, description: "Long-lived refresh token (gmail.modify + calendar scopes). Falls back to GOOGLE_REFRESH_TOKEN." }
