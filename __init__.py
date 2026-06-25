@@ -152,5 +152,17 @@ def register(registry) -> None:
     )
     for t in TOOLS:
         registry.register_tool(t)
+
+    # Console view: public page (/plugins/google/view) + gated data (/api/plugins/google/*).
+    try:
+        from . import calendar as cal
+        from . import gmail
+        from .view import build_router
+        page, data = build_router(_creds, gmail, cal)
+        registry.register_router(page)  # default prefix /plugins/google (public via public_paths)
+        registry.register_router(data, prefix="/api/plugins/google")
+    except Exception:  # noqa: BLE001 — view is best-effort
+        log.exception("[google] mounting view router failed")
+
     if not _CREDS.configured():
         log.info("[google] tools registered but credentials not set — they return a setup hint until configured")

@@ -15,6 +15,14 @@ capabilities:
   network: [oauth2.googleapis.com, gmail.googleapis.com, www.googleapis.com]
   filesystem: none
 
+# Console view (ADR 0026) — connection status + unread mail + upcoming events.
+# The page is public (browser iframe can't carry a bearer); its data is fetched
+# from the gated /api/plugins/google/* routes.
+views:
+  - { id: google, label: Google, icon: Mail, path: /plugins/google/view, placement: right }
+public_paths:
+  - /plugins/google/view
+
 config_section: google
 config:
   client_id: ""
