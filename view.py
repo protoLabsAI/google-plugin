@@ -1,78 +1,78 @@
 """Console view for the Google Workspace plugin — connection + at-a-glance summary.
 
-Public page at /plugins/google/view (declared in manifest public_paths); data from
-the GATED /api/plugins/google/* routes with the operator bearer.
+Public page at /plugins/google/view (declared in manifest public_paths); links the
+host design-system plugin-kit so it's themed from the operator's live `--pl-*`
+tokens, and uses the kit's `apiFetch` to read the gated /api/plugins/google/* routes.
 """
 
-PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Google Workspace</title>
+PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Google Workspace</title>
+<script>
+  window.__base = location.pathname.split("/plugins/")[0];
+  document.write('<link rel="stylesheet" href="' + window.__base + '/_ds/plugin-kit.css">');
+</script>
 <style>
-  :root{--bg:#0a0f14;--fg:#e6e6e6;--muted:#9aa0aa;--card:#11161c;--line:#1f2630;--accent:#9b87f2}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);
-    font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:14px}
-  .wrap{max-width:720px;margin:0 auto;padding:24px}
-  h1{font-size:18px;margin:0 0 2px} .sub{color:var(--muted);margin:0 0 20px;font-size:13px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
-  .row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
-  .row:last-child{border-bottom:none} .k{color:var(--muted)}
-  .badge{font-weight:600} .ok{color:#46c46a} .no{color:#e5687a}
-  .item{padding:8px 0;border-bottom:1px solid var(--line)} .item:last-child{border-bottom:none}
-  .from{color:var(--accent);font-weight:600} .meta{color:var(--muted);font-size:12px}
-  .empty{color:var(--muted);padding:8px 0} .err{color:#e5687a;font-size:13px}
-  h2{font-size:13px;color:var(--muted);margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em}
-</style></head><body><div class="wrap">
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--pl-color-bg-raised);color:var(--pl-color-fg);
+    font-family:var(--pl-font-sans,ui-sans-serif,system-ui,sans-serif);font-size:13px}
+  .wrap{max-width:760px;margin:0 auto;padding:20px}
+  h1{font-size:17px;margin:0 0 2px} .sub{color:var(--pl-color-fg-muted);margin:0 0 18px;font-size:12px}
+  .pl-card{margin-bottom:14px}
+  h2{font-size:11px;color:var(--pl-color-fg-muted);margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:7px 0}
+  .k{color:var(--pl-color-fg-muted)}
+  .item{padding:8px 0;border-bottom:1px solid var(--pl-color-border)} .item:last-child{border-bottom:none}
+  .from{color:var(--pl-color-accent);font-weight:var(--pl-font-weight-semibold,600)}
+  .meta{color:var(--pl-color-fg-muted);font-size:12px}
+  .empty{color:var(--pl-color-fg-muted);padding:8px 0} .err{color:var(--pl-color-status-error);font-size:12px}
+</style></head><body>
+<div class="wrap">
   <h1>Google Workspace</h1>
   <p class="sub">Gmail (read + draft) and Calendar (read) — drafts only, never sends.</p>
-  <div class="card" id="status"><div class="empty">Loading…</div></div>
-  <div class="card"><h2>Unread mail</h2><div id="mail"><div class="empty">—</div></div></div>
-  <div class="card"><h2>Upcoming events</h2><div id="cal"><div class="empty">—</div></div></div>
+  <div class="pl-card" id="status"><div class="empty">Loading…</div></div>
+  <div class="pl-card"><h2>Unread mail</h2><div id="mail"><div class="empty">—</div></div></div>
+  <div class="pl-card"><h2>Upcoming events</h2><div id="cal"><div class="empty">—</div></div></div>
 </div>
-<script>
-  var BASE = location.pathname.replace(/\\/plugins\\/google\\/view.*$/, "");
-  var TOKEN = "";
-  function authed(){ return TOKEN ? {Authorization:"Bearer "+TOKEN} : {}; }
-  function esc(s){ return (s||"").replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+<script type="module">
+  "use strict";
+  let kit;
+  try { kit = await import(window.__base + "/_ds/plugin-kit.js"); }
+  catch (e) { kit = { initPluginView(cb){ cb && cb(); }, apiFetch:(p,i)=>fetch(window.__base+p,i) }; }
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s==null?"":s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
   async function load(){
     try{
-      var r = await fetch(BASE+"/api/plugins/google/status", {headers:authed()});
-      if(!r.ok){ document.getElementById("status").innerHTML='<div class="err">Status '+r.status+'</div>'; return; }
-      var s = await r.json();
-      document.getElementById("status").innerHTML =
-        '<div class="row"><span class="k">Credentials</span><span class="badge '+(s.configured?"ok":"no")+'">'+
-        (s.configured?"configured":"not set — fill client_id / client_secret / refresh_token")+'</span></div>';
+      const r = await kit.apiFetch("/api/plugins/google/status");
+      if(!r.ok){ $("status").innerHTML='<div class="err">Status '+r.status+'</div>'; return; }
+      const s = await r.json();
+      $("status").innerHTML = '<div class="row"><span class="k">Credentials</span><span class="pl-badge pl-badge--'+
+        (s.configured?'success':'error')+'">'+(s.configured?'configured':'not set — fill client_id / client_secret / refresh_token')+'</span></div>';
       if(s.configured){ loadMail(); loadCal(); }
-      else { document.getElementById("mail").innerHTML='<div class="empty">Set credentials to load.</div>';
-             document.getElementById("cal").innerHTML='<div class="empty">Set credentials to load.</div>'; }
-    }catch(e){ document.getElementById("status").innerHTML='<div class="err">'+e+'</div>'; }
+      else { $("mail").innerHTML='<div class="empty">Set credentials to load.</div>';
+             $("cal").innerHTML='<div class="empty">Set credentials to load.</div>'; }
+    }catch(e){ $("status").innerHTML='<div class="err">'+esc(e)+'</div>'; }
   }
   async function loadMail(){
-    var box=document.getElementById("mail");
+    const box=$("mail");
     try{
-      var d = await (await fetch(BASE+"/api/plugins/google/unread", {headers:authed()})).json();
+      const d = await kit.apiFetch("/api/plugins/google/unread").then(r=>r.json());
       if(d.error){ box.innerHTML='<div class="err">'+esc(d.error)+'</div>'; return; }
-      if(!d.messages||!d.messages.length){ box.innerHTML='<div class="empty">Inbox zero.</div>'; return; }
-      box.innerHTML = d.messages.map(function(m){
-        return '<div class="item"><span class="from">'+esc(m.from)+'</span><div>'+esc(m.subject)+
-               '</div><div class="meta">'+esc(m.date)+'</div></div>'; }).join("");
-    }catch(e){ box.innerHTML='<div class="err">'+e+'</div>'; }
+      if(!d.messages || !d.messages.length){ box.innerHTML='<div class="empty">Inbox zero.</div>'; return; }
+      box.innerHTML = d.messages.map(m => '<div class="item"><span class="from">'+esc(m.from)+'</span><div>'+esc(m.subject)+'</div><div class="meta">'+esc(m.date)+'</div></div>').join("");
+    }catch(e){ box.innerHTML='<div class="err">'+esc(e)+'</div>'; }
   }
   async function loadCal(){
-    var box=document.getElementById("cal");
+    const box=$("cal");
     try{
-      var d = await (await fetch(BASE+"/api/plugins/google/upcoming", {headers:authed()})).json();
+      const d = await kit.apiFetch("/api/plugins/google/upcoming").then(r=>r.json());
       if(d.error){ box.innerHTML='<div class="err">'+esc(d.error)+'</div>'; return; }
-      if(!d.events||!d.events.length){ box.innerHTML='<div class="empty">Nothing scheduled.</div>'; return; }
-      box.innerHTML = d.events.map(function(e){
-        return '<div class="item"><span class="from">'+esc(e.title)+'</span><div class="meta">'+esc(e.start)+'</div></div>'; }).join("");
-    }catch(e){ box.innerHTML='<div class="err">'+e+'</div>'; }
+      if(!d.events || !d.events.length){ box.innerHTML='<div class="empty">Nothing scheduled.</div>'; return; }
+      box.innerHTML = d.events.map(e => '<div class="item"><span class="from">'+esc(e.title)+'</span><div class="meta">'+esc(e.start)+'</div></div>').join("");
+    }catch(e){ box.innerHTML='<div class="err">'+esc(e)+'</div>'; }
   }
-  function applyTheme(t){ if(!t)return; if(t.bg)document.body.style.background=t.bg; if(t.fg)document.body.style.color=t.fg; }
-  window.addEventListener("message", function(e){
-    var m=e.data||{};
-    if(m.type==="protoagent:init"){ TOKEN=m.token||""; applyTheme(m.theme); load(); }
-    else if(m.type==="protoagent:theme"){ applyTheme(m.theme); }
-  });
-  setTimeout(function(){ if(!TOKEN) load(); }, 800);
+  kit.initPluginView(load);
+  load();
 </script></body></html>"""
 
 
