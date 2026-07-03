@@ -104,13 +104,15 @@ def get_access_token(creds: Creds, *, client: httpx.Client | None = None) -> str
 
 
 def request(creds: Creds, method: str, url: str, *, params: dict | None = None,
-            json: dict | None = None, client: httpx.Client | None = None) -> dict:
+            json: dict | None = None, client: httpx.Client | None = None,
+            raw: bool = False) -> dict | str:
     """Authenticated Google REST call. Returns parsed JSON (or {} on 204).
 
     Any service module builds on this — pass a full endpoint URL + params/json.
     Pass ``client`` (e.g. an httpx.MockTransport client) to unit-test offline.
-    A 401 retries once with a freshly minted token; other errors raise GoogleError
-    with Google's message from the response body.
+    ``raw=True`` returns the response body as text (Drive exports / media, which
+    aren't JSON). A 401 retries once with a freshly minted token; other errors
+    raise GoogleError with Google's message from the response body.
     """
     owns = client is None
     c = client or httpx.Client(timeout=30)
@@ -129,6 +131,8 @@ def request(creds: Creds, method: str, url: str, *, params: dict | None = None,
     if resp.status_code >= 400:
         detail = _error_detail(resp) or "no detail"
         raise GoogleError(f"{method} {resp.url.path} -> {resp.status_code}: {detail}")
+    if raw:
+        return resp.text
     if resp.status_code == 204 or not resp.content:
         return {}
     return resp.json()

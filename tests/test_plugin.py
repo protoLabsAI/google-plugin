@@ -69,6 +69,8 @@ def test_register_wires_tools_and_routers(registry):
         "gmail_create_draft",
         "calendar_list_upcoming",
         "calendar_event_detail",
+        "drive_search",
+        "drive_read",
     }
     assert [p for _, p in registry.routers] == [None, "/api/plugins/google"]
     assert plugin._creds().configured()
