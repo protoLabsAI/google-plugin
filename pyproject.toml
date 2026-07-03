@@ -1,6 +1,6 @@
 [project]
 name = "google-plugin"
-version = "0.4.0"
+version = "0.5.0"
 description = "Google Workspace plugin for protoAgent — Gmail (read + draft) + Calendar (read) over a service-agnostic OAuth/REST core, built to grow."
 requires-python = ">=3.11"
 

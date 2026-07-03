@@ -23,12 +23,16 @@ from .auth import OAUTH_TOKEN_URL
 
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 
-# The "grow into" scope set (see README): Gmail read+draft, Calendar, Drive read.
-# Override with the `oauth_scopes` config key (space-separated) before connecting.
+# The "grow into" scope set (see README): Gmail read+draft+hygiene, Calendar rw,
+# Drive read, Contacts read, Docs create. Override with the `oauth_scopes` config
+# key (space-separated) before connecting.
 DEFAULT_SCOPES = (
     "https://www.googleapis.com/auth/gmail.modify",
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/contacts.readonly",
+    "https://www.googleapis.com/auth/contacts.other.readonly",
+    "https://www.googleapis.com/auth/documents",
 )
 
 _STATE_TTL_S = 600

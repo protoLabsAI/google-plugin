@@ -331,6 +331,66 @@ def calendar_event_detail(event_id: str, calendar_id: str = "primary") -> str:
     return out if isinstance(out, str) else json.dumps(out, indent=2)
 
 
+@tool
+def calendar_create_event(title: str, start: str, end: str, description: str = "",
+                          location: str = "", timezone: str = "", calendar_id: str = "primary") -> str:
+    """Create an event on the user's OWN calendar. Cannot invite attendees — that
+    would email people, and this plugin never sends. Reversible (delete in Calendar).
+
+    Args:
+        title: event title.
+        start: ISO datetime (e.g. 2026-07-04T09:00:00-07:00) or YYYY-MM-DD for all-day.
+        end: same format as start.
+        description: optional notes.
+        location: optional location.
+        timezone: IANA tz (e.g. America/Los_Angeles) if start/end lack an offset.
+        calendar_id: calendar id (default "primary").
+    """
+    from . import gcal
+
+    out = _run(gcal.create_event, _creds(), title, start, end, description, location, timezone, calendar_id)
+    if isinstance(out, str):
+        return out
+    return f"Event created: \"{out['title']}\" {out['start']} → {out['end']} — {out['link']} (no attendees invited)."
+
+
+# ── Contacts (read-only) ──────────────────────────────────────────────────────
+
+@tool
+def contacts_search(query: str, max: int = 10) -> str:
+    """Find people (name, email addresses, org) in the user's Google contacts —
+    including auto-collected past correspondents. Read-only. Use before drafting
+    mail when you only know a person's name.
+
+    Args:
+        query: a name, email fragment, or company.
+        max: max people (default 10, cap 30).
+    """
+    from . import gpeople
+
+    out = _run(gpeople.search, _creds(), query, max)
+    return out if isinstance(out, str) else json.dumps({"query": query, "count": len(out), "people": out}, indent=2)
+
+
+# ── Docs (create-only) ────────────────────────────────────────────────────────
+
+@tool
+def docs_create(title: str, text: str = "") -> str:
+    """Create a NEW Google Doc in the user's Drive with optional initial text.
+    Private until the user shares it; existing docs are never edited.
+
+    Args:
+        title: document title.
+        text: initial plain-text content (optional).
+    """
+    from . import gdocs
+
+    out = _run(gdocs.create, _creds(), title, text)
+    if isinstance(out, str):
+        return out
+    return f"Doc created: \"{out['title']}\" — {out['link']}"
+
+
 # ── Drive (read-only) ─────────────────────────────────────────────────────────
 
 @tool
@@ -367,6 +427,7 @@ TOOLS = [
     gmail_list_unread, gmail_search, gmail_get_thread, gmail_create_draft, gmail_mark_read,
     gmail_label, gmail_get_attachment, gmail_list_drafts, gmail_update_draft,
     calendar_list_upcoming, calendar_event_detail, calendar_availability, calendar_search,
+    calendar_create_event, contacts_search, docs_create,
     drive_search, drive_read,
 ]
 
