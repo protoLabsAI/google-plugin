@@ -11,6 +11,7 @@ description: >-
   mint it with the full scope set you intend to grow into (e.g. gmail.modify,
   calendar, drive, documents, spreadsheets).
 enabled: false
+min_protoagent_version: "0.71.0"  # manifest public_paths (#1345)
 capabilities:
   network: [oauth2.googleapis.com, gmail.googleapis.com, www.googleapis.com]
   filesystem: none
