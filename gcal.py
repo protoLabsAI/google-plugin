@@ -1,13 +1,15 @@
-"""Calendar service — read-only. Built on the shared auth core."""
+"""Calendar service — read-only. Built on the shared auth core.
+
+Named ``gcal`` (not ``calendar``) so it can never shadow the stdlib ``calendar``
+module — stdlib ``email`` imports ``calendar``, so a root-level ``calendar.py``
+breaks any Python started from this directory.
+"""
 
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-try:
-    from .auth import Creds, request
-except ImportError:  # pragma: no cover — flat import path for unit tests
-    from auth import Creds, request
+from .auth import Creds, request
 
 BASE = "https://www.googleapis.com/calendar/v3/calendars"
 

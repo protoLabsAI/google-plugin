@@ -22,8 +22,9 @@ python -m server plugin install https://github.com/protoLabsAI/google-plugin
 ```
 
 ## Test
+Host-free — no protoAgent checkout needed:
 ```bash
-cd /path/to/protoAgent && uv run --frozen python -m pytest /path/to/google-plugin/tests -q
+pip install -r requirements-dev.txt && pytest -q
 ```
 
 Ported from the `gmail_*` / `calendar_*` tools of protoWorkstacean's Ava agent.

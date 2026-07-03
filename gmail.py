@@ -8,11 +8,7 @@ from __future__ import annotations
 import base64
 from email.utils import formatdate
 
-# Dual import: relative at runtime (loaded as the ``google`` package), flat in tests.
-try:
-    from .auth import Creds, request
-except ImportError:  # pragma: no cover — flat import path for unit tests
-    from auth import Creds, request
+from .auth import Creds, request
 
 BASE = "https://gmail.googleapis.com/gmail/v1/users/me"
 
