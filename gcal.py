@@ -68,6 +68,32 @@ def search_events(creds: Creds, query: str, days_back: int = 30, days_ahead: int
     return [_summary(e) for e in (data.get("items") or [])]
 
 
+def create_event(creds: Creds, title: str, start: str, end: str, description: str = "",
+                 location: str = "", timezone_name: str = "", calendar_id: str = "primary",
+                 *, client=None) -> dict:
+    """Create an event on the user's OWN calendar. Deliberately takes NO attendees —
+    inviting people emails them, which crosses the plugin's never-send line.
+
+    ``start``/``end``: ISO datetimes (offset or ``timezone_name`` required) or bare
+    YYYY-MM-DD dates for all-day events.
+    """
+    def _when(value: str) -> dict:
+        if "T" not in value:
+            return {"date": value}
+        out = {"dateTime": value}
+        if timezone_name:
+            out["timeZone"] = timezone_name
+        return out
+
+    body: dict = {"summary": title, "start": _when(start), "end": _when(end)}
+    if description:
+        body["description"] = description
+    if location:
+        body["location"] = location
+    e = request(creds, "POST", f"{BASE}/{calendar_id}/events", json=body, client=client)
+    return _summary(e)
+
+
 def event_detail(creds: Creds, event_id: str, calendar_id: str = "primary", *, client=None) -> dict:
     e = request(creds, "GET", f"{BASE}/{calendar_id}/events/{event_id}", client=client)
     s = _summary(e)

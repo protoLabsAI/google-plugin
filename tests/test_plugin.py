@@ -76,6 +76,9 @@ def test_register_wires_tools_and_routers(registry):
         "calendar_event_detail",
         "calendar_availability",
         "calendar_search",
+        "calendar_create_event",
+        "contacts_search",
+        "docs_create",
         "drive_search",
         "drive_read",
     }

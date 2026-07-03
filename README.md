@@ -1,6 +1,6 @@
 # google-plugin
 
-**Google Workspace** for a [protoAgent](https://github.com/protoLabsAI/protoAgent) agent — built to grow. Ships **Gmail (read + draft)**, **Calendar (read)**, and **Drive (read)** today over a service-agnostic OAuth/REST core, so Docs / Sheets / further services are additive modules, not a rewrite.
+**Google Workspace** for a [protoAgent](https://github.com/protoLabsAI/protoAgent) agent — built to grow. Ships **Gmail (read + draft + hygiene)**, **Calendar (read + free/busy + own-calendar events)**, **Contacts (search)**, **Docs (create)**, and **Drive (read)** over a service-agnostic OAuth/REST core, so further services are additive modules, not a rewrite.
 
 Pull-mode posture: the agent lists, searches, reads, **drafts**, and does **mailbox hygiene** (mark read, label, archive) — it never sends, deletes, or auto-replies. A human reviews drafts in the Drafts folder and sends them.
 
@@ -13,6 +13,9 @@ Pull-mode posture: the agent lists, searches, reads, **drafts**, and does **mail
 - `gmail_list_drafts(max)` · `gmail_update_draft(draft_id, body, …)` — revise drafts; **still never sends**.
 - `calendar_list_upcoming(days, calendar_id)` · `calendar_event_detail(event_id, calendar_id)` — read.
 - `calendar_availability(days)` — free/busy blocks. · `calendar_search(query, days_back, days_ahead)` — text search.
+- `calendar_create_event(title, start, end, …)` — own calendar only; **takes no attendees** (inviting emails people).
+- `contacts_search(query)` — names → email addresses (saved + auto-collected contacts). Read-only.
+- `docs_create(title, text)` — a NEW private Google Doc; existing docs are never edited.
 - `drive_search(query, max)` · `drive_read(file_id, max_chars)` — read; Docs export as text, Sheets as CSV, Slides as text.
 
 ## Architecture
@@ -27,7 +30,7 @@ One-time Google Cloud setup (5 minutes):
 3. **Credentials ▸ Create credentials ▸ OAuth client ID ▸ Web application**, authorized redirect URIs: `http://localhost:7870/plugins/google/oauth/callback` (add `:7871` for the dev instance; the URI must exactly match the origin you open the console on).
 4. Paste the client ID + secret into the plugin settings.
 
-Default scopes requested: `gmail.modify`, `calendar`, `drive.readonly` (override via the `oauth_scopes` setting — request the set you intend to grow into so adding a service needs no re-consent).
+Default scopes requested: `gmail.modify`, `calendar`, `drive.readonly`, `contacts.readonly`, `contacts.other.readonly`, `documents` (override via the `oauth_scopes` setting). Tokens minted before v0.5.0 lack the contacts/docs scopes — hit **Reconnect** once to widen; those tools return a readable insufficient-scope error until then.
 
 Manual fallback (headless / no browser): mint a refresh token yourself and set `google.refresh_token` (or `GOOGLE_REFRESH_TOKEN`); env fallbacks `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` work too.
 
