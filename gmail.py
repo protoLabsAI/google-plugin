@@ -1,6 +1,8 @@
-"""Gmail service — read + draft (never send). Built on the shared auth core.
+"""Gmail service — read, draft (never send), and mark-read. Built on the shared auth core.
 
 One of several Workspace service modules; mirrors the protoWorkstacean Gmail tools.
+Mark-read is the one mailbox mutation beyond drafts: it only clears the UNREAD
+label — it never archives, deletes, or sends.
 """
 
 from __future__ import annotations
@@ -81,6 +83,22 @@ def get_thread(creds: Creds, thread_id: str, *, client=None) -> list[dict]:
         s["body"] = _body(m.get("payload", {}))
         out.append(s)
     return out
+
+
+def mark_read(creds: Creds, message_ids: list[str] | None = None, thread_id: str = "", *, client=None) -> dict:
+    """Clear the UNREAD label from specific messages (batchModify) or a whole thread.
+
+    The only mutation this performs is removing UNREAD — nothing is archived,
+    deleted, or sent. Needs the gmail.modify scope.
+    """
+    if thread_id:
+        data = request(creds, "POST", f"{BASE}/threads/{thread_id}/modify",
+                       json={"removeLabelIds": ["UNREAD"]}, client=client)
+        return {"threadId": thread_id, "marked": len(data.get("messages") or []) or 1}
+    ids = [i for i in (message_ids or []) if i][:1000]  # batchModify caps at 1000
+    request(creds, "POST", f"{BASE}/messages/batchModify",
+            json={"ids": ids, "removeLabelIds": ["UNREAD"]}, client=client)  # 204 on success
+    return {"marked": len(ids)}
 
 
 def build_draft_raw(body: str, to: str = "", subject: str = "",

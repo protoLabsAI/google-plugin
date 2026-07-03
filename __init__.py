@@ -5,8 +5,9 @@ Ports Ava's Google tools from protoWorkstacean. Deliberately NOT pigeonholed as
 service (``gmail.py``, ``gcal.py`` — Drive / Docs / Sheets drop in the same way),
 so expanding to the wider Workspace is new tool functions, not a re-architecture.
 
-Pull-mode posture: the agent lists, searches, reads, and DRAFTS — it never sends or
-auto-replies; a human reviews drafts and sends them. Credentials come from plugin
+Pull-mode posture: the agent lists, searches, reads, DRAFTS, and can mark mail
+read — it never sends, archives, deletes, or auto-replies; a human reviews drafts
+and sends them. Credentials come from plugin
 config (``google.*``) with env fallbacks (``GOOGLE_CLIENT_ID`` /
 ``GOOGLE_CLIENT_SECRET`` / ``GOOGLE_REFRESH_TOKEN``). Mint the refresh token with the
 full scope set you intend to grow into so adding a service needs no re-consent.
@@ -130,6 +131,28 @@ def gmail_create_draft(body: str, thread_id: str = "", to: str = "", subject: st
     return f"Draft created (id {out['draftId']}) to {out['to'] or '(thread)'} — \"{out['subject']}\". In Drafts; not sent."
 
 
+@tool
+def gmail_mark_read(message_ids: list[str] | None = None, thread_id: str = "") -> str:
+    """Mark Gmail messages as read (clears the UNREAD label — nothing is archived,
+    deleted, or sent). Pass message_ids from gmail_list_unread/gmail_search, OR a
+    thread_id to mark a whole thread.
+
+    Args:
+        message_ids: message ids to mark read (up to 1000).
+        thread_id: mark every message in this thread instead.
+    """
+    from . import gmail
+
+    if not thread_id and not message_ids:
+        return "Provide message_ids (from gmail_list_unread / gmail_search) or a thread_id."
+    out = _run(gmail.mark_read, _creds(), message_ids, thread_id)
+    if isinstance(out, str):
+        return out
+    if out.get("threadId"):
+        return f"Marked thread {out['threadId']} read ({out['marked']} message(s))."
+    return f"Marked {out['marked']} message(s) read."
+
+
 # ── Calendar (read-only) ──────────────────────────────────────────────────────
 
 @tool
@@ -193,7 +216,7 @@ def drive_read(file_id: str, max_chars: int = 20000) -> str:
 
 # Registered tools, grouped by service. Append new service tools here as they land.
 TOOLS = [
-    gmail_list_unread, gmail_search, gmail_get_thread, gmail_create_draft,
+    gmail_list_unread, gmail_search, gmail_get_thread, gmail_create_draft, gmail_mark_read,
     calendar_list_upcoming, calendar_event_detail,
     drive_search, drive_read,
 ]

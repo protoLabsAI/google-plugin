@@ -1,10 +1,10 @@
 id: google
 name: Google Workspace
-version: 0.2.0
+version: 0.3.0
 description: >-
   Google Workspace for the agent, built to grow. Ships Gmail (read + draft),
   Calendar (read), and Drive (read) today — gmail_list_unread, gmail_search,
-  gmail_get_thread, gmail_create_draft (DRAFT ONLY — never sends),
+  gmail_get_thread, gmail_create_draft (DRAFT ONLY — never sends), gmail_mark_read,
   calendar_list_upcoming, calendar_event_detail, drive_search, drive_read — over a
   service-agnostic OAuth/REST core (no SDK) so Docs and Sheets are additive
   modules, not a rewrite. Pull-mode: the agent reads

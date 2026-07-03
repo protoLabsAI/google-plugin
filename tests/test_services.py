@@ -7,6 +7,7 @@ Modules import through the synthetic ``google_plugin`` package (see conftest.py)
 from __future__ import annotations
 
 import base64
+import json
 
 import httpx
 import pytest
@@ -154,6 +155,37 @@ def test_calendar_list_and_detail(client):
     assert detail["description"] == "daily"
     assert detail["attendees"][0] == {"email": "a@x.com", "name": "Al", "status": "accepted"}
     assert detail["organizer"]["email"] == "o@x.com"
+
+
+def test_mark_read_batch_removes_unread_label():
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "oauth2.googleapis.com":
+            return httpx.Response(200, json={"access_token": "at", "expires_in": 3600})
+        seen["path"] = request.url.path
+        seen["body"] = json.loads(request.read().decode())
+        return httpx.Response(204)
+
+    auth._TOKEN_CACHE.clear()
+    with httpx.Client(transport=httpx.MockTransport(handler)) as c:
+        out = gmail.mark_read(CREDS, ["m1", "m2", ""], client=c)
+    assert out == {"marked": 2}  # blank id dropped
+    assert seen["path"].endswith("/messages/batchModify")
+    assert seen["body"] == {"ids": ["m1", "m2"], "removeLabelIds": ["UNREAD"]}
+
+
+def test_mark_read_thread_modifies_whole_thread():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "oauth2.googleapis.com":
+            return httpx.Response(200, json={"access_token": "at", "expires_in": 3600})
+        assert request.url.path.endswith("/threads/t1/modify")
+        return httpx.Response(200, json={"id": "t1", "messages": [{"id": "m1"}, {"id": "m2"}]})
+
+    auth._TOKEN_CACHE.clear()
+    with httpx.Client(transport=httpx.MockTransport(handler)) as c:
+        out = gmail.mark_read(CREDS, thread_id="t1", client=c)
+    assert out == {"threadId": "t1", "marked": 2}
 
 
 # ── Error surfacing + 401 retry ───────────────────────────────────────────────
