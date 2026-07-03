@@ -12,8 +12,18 @@ Pull-mode posture: the agent lists, searches, reads, and **drafts** — it never
 ## Architecture
 `auth.py` is a service-agnostic OAuth-refresh + REST core; one module per service (`gmail.py`, `calendar.py`). Adding Drive/Docs/Sheets is a new module + tools on the same core.
 
-## Config
-`google.client_id` / `client_secret` / `refresh_token` (or `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REFRESH_TOKEN`). **Mint the refresh token with the full scope set you intend to grow into** (e.g. `gmail.modify`, `calendar`, `drive`, `documents`, `spreadsheets`) so adding a service needs no re-consent.
+## Connect (one-click OAuth)
+Set `google.client_id` + `client_secret` in **Settings ▸ Plugins ▸ Google**, open the **Google** panel, hit **Connect Google**, approve on Google's consent screen — done. The plugin runs the authorization-code flow itself (public callback at `/plugins/google/oauth/callback`, gated by a single-use state nonce) and writes the refresh token into the untracked `secrets.yaml`; it takes effect immediately, no restart.
+
+One-time Google Cloud setup (5 minutes):
+1. [console.cloud.google.com](https://console.cloud.google.com) → a project → enable the **Gmail API**, **Google Calendar API** (and **Drive API** if you'll use it).
+2. **OAuth consent screen**: user type **Internal** if you're on Google Workspace (no verification, no token expiry); personal Gmail must use External + add yourself as a test user (note: refresh tokens for External apps in *Testing* status expire after 7 days — publish to production to avoid re-connecting weekly).
+3. **Credentials ▸ Create credentials ▸ OAuth client ID ▸ Web application**, authorized redirect URIs: `http://localhost:7870/plugins/google/oauth/callback` (add `:7871` for the dev instance; the URI must exactly match the origin you open the console on).
+4. Paste the client ID + secret into the plugin settings.
+
+Default scopes requested: `gmail.modify`, `calendar`, `drive.readonly` (override via the `oauth_scopes` setting — request the set you intend to grow into so adding a service needs no re-consent).
+
+Manual fallback (headless / no browser): mint a refresh token yourself and set `google.refresh_token` (or `GOOGLE_REFRESH_TOKEN`); env fallbacks `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` work too.
 
 ## Install
 ```bash
