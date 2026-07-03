@@ -2,11 +2,12 @@ id: google
 name: Google Workspace
 version: 0.1.0
 description: >-
-  Google Workspace for the agent, built to grow. Ships Gmail (read + draft) and
-  Calendar (read) today — gmail_list_unread, gmail_search, gmail_get_thread,
-  gmail_create_draft (DRAFT ONLY — never sends), calendar_list_upcoming,
-  calendar_event_detail — over a service-agnostic OAuth/REST core (no SDK) so Drive,
-  Docs, and Sheets are additive modules, not a rewrite. Pull-mode: the agent reads
+  Google Workspace for the agent, built to grow. Ships Gmail (read + draft),
+  Calendar (read), and Drive (read) today — gmail_list_unread, gmail_search,
+  gmail_get_thread, gmail_create_draft (DRAFT ONLY — never sends),
+  calendar_list_upcoming, calendar_event_detail, drive_search, drive_read — over a
+  service-agnostic OAuth/REST core (no SDK) so Docs and Sheets are additive
+  modules, not a rewrite. Pull-mode: the agent reads
   and drafts; a human reviews and sends. Needs a Google OAuth client + refresh token;
   mint it with the full scope set you intend to grow into (e.g. gmail.modify,
   calendar, drive, documents, spreadsheets). One-click connect: paste the OAuth

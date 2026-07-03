@@ -160,10 +160,42 @@ def calendar_event_detail(event_id: str, calendar_id: str = "primary") -> str:
     return out if isinstance(out, str) else json.dumps(out, indent=2)
 
 
+# ── Drive (read-only) ─────────────────────────────────────────────────────────
+
+@tool
+def drive_search(query: str, max: int = 20) -> str:
+    """Search Google Drive by content and title (full-text). Read-only.
+
+    Args:
+        query: free-text search (matches file names and contents).
+        max: max files (default 20, cap 50).
+    """
+    from . import gdrive
+
+    out = _run(gdrive.search, _creds(), query, max)
+    return out if isinstance(out, str) else json.dumps({"query": query, "count": len(out), "files": out}, indent=2)
+
+
+@tool
+def drive_read(file_id: str, max_chars: int = 20000) -> str:
+    """Read one Drive file as text (Docs → text, Sheets → CSV, Slides → text; plain
+    text files raw; binary files return metadata + link only). Read-only.
+
+    Args:
+        file_id: the Drive file id (from drive_search).
+        max_chars: truncate the content to this many characters (default 20000).
+    """
+    from . import gdrive
+
+    out = _run(gdrive.read, _creds(), file_id, max_chars)
+    return out if isinstance(out, str) else json.dumps(out, indent=2)
+
+
 # Registered tools, grouped by service. Append new service tools here as they land.
 TOOLS = [
     gmail_list_unread, gmail_search, gmail_get_thread, gmail_create_draft,
     calendar_list_upcoming, calendar_event_detail,
+    drive_search, drive_read,
 ]
 
 

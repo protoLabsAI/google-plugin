@@ -1,6 +1,6 @@
 # google-plugin
 
-**Google Workspace** for a [protoAgent](https://github.com/protoLabsAI/protoAgent) agent — built to grow. Ships **Gmail (read + draft)** and **Calendar (read)** today over a service-agnostic OAuth/REST core, so Drive / Docs / Sheets are additive modules, not a rewrite.
+**Google Workspace** for a [protoAgent](https://github.com/protoLabsAI/protoAgent) agent — built to grow. Ships **Gmail (read + draft)**, **Calendar (read)**, and **Drive (read)** today over a service-agnostic OAuth/REST core, so Docs / Sheets / further services are additive modules, not a rewrite.
 
 Pull-mode posture: the agent lists, searches, reads, and **drafts** — it never sends or auto-replies. A human reviews drafts in the Drafts folder and sends them.
 
@@ -8,9 +8,10 @@ Pull-mode posture: the agent lists, searches, reads, and **drafts** — it never
 - `gmail_list_unread(label, max)` · `gmail_search(query, max)` · `gmail_get_thread(thread_id)` — read.
 - `gmail_create_draft(body, thread_id | to+subject, …)` — **draft only, never sends**.
 - `calendar_list_upcoming(days, calendar_id)` · `calendar_event_detail(event_id, calendar_id)` — read.
+- `drive_search(query, max)` · `drive_read(file_id, max_chars)` — read; Docs export as text, Sheets as CSV, Slides as text.
 
 ## Architecture
-`auth.py` is a service-agnostic OAuth-refresh + REST core; one module per service (`gmail.py`, `calendar.py`). Adding Drive/Docs/Sheets is a new module + tools on the same core.
+`auth.py` is a service-agnostic OAuth-refresh + REST core; one module per service (`gmail.py`, `gcal.py`, `gdrive.py`). Adding Docs/Sheets is a new module + tools on the same core.
 
 ## Connect (one-click OAuth)
 Set `google.client_id` + `client_secret` in **Settings ▸ Plugins ▸ Google**, open the **Google** panel, hit **Connect Google**, approve on Google's consent screen — done. The plugin runs the authorization-code flow itself (public callback at `/plugins/google/oauth/callback`, gated by a single-use state nonce) and writes the refresh token into the untracked `secrets.yaml`; it takes effect immediately, no restart.
