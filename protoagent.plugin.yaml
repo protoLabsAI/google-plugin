@@ -9,7 +9,9 @@ description: >-
   Docs, and Sheets are additive modules, not a rewrite. Pull-mode: the agent reads
   and drafts; a human reviews and sends. Needs a Google OAuth client + refresh token;
   mint it with the full scope set you intend to grow into (e.g. gmail.modify,
-  calendar, drive, documents, spreadsheets).
+  calendar, drive, documents, spreadsheets). One-click connect: paste the OAuth
+  client id + secret, then hit Connect Google in the console view — the plugin runs
+  the consent flow and stores the refresh token itself.
 enabled: false
 min_protoagent_version: "0.71.0"  # manifest public_paths (#1345)
 capabilities:
@@ -23,14 +25,17 @@ views:
   - { id: google, label: Google, icon: Mail, path: /plugins/google/view, placement: right }
 public_paths:
   - /plugins/google/view
+  - /plugins/google/oauth/callback  # Google's redirect can't carry a bearer; gated by a single-use state nonce
 
 config_section: google
 config:
   client_id: ""
   client_secret: ""
   refresh_token: ""
+  oauth_scopes: ""
 secrets: [client_secret, refresh_token]
 settings:
   - { key: client_id, label: "OAuth client ID", type: string, description: "Google Cloud OAuth 2.0 client ID. Falls back to GOOGLE_CLIENT_ID." }
   - { key: client_secret, label: "OAuth client secret", type: secret, description: "Stored in secrets.yaml. Falls back to GOOGLE_CLIENT_SECRET." }
-  - { key: refresh_token, label: "OAuth refresh token", type: secret, description: "Long-lived refresh token (gmail.modify + calendar scopes). Falls back to GOOGLE_REFRESH_TOKEN." }
+  - { key: refresh_token, label: "OAuth refresh token", type: secret, description: "Filled automatically by Connect Google in the console view (or paste one minted manually). Falls back to GOOGLE_REFRESH_TOKEN." }
+  - { key: oauth_scopes, label: "OAuth scopes", type: string, description: "Space-separated scopes Connect Google requests. Blank = gmail.modify + calendar + drive.readonly." }

@@ -164,6 +164,15 @@ TOOLS = [
 ]
 
 
+def _set_refresh_token(token: str) -> None:
+    """Swap the live refresh token in place (the OAuth callback's connect-now hook)."""
+    global _CREDS
+    from .auth import Creds
+
+    c = _creds()
+    _CREDS = Creds(c.client_id, c.client_secret, token)
+
+
 def register(registry) -> None:
     """Entry point — called once per graph build with the live config."""
     global _CREDS
@@ -178,12 +187,17 @@ def register(registry) -> None:
     for t in TOOLS:
         registry.register_tool(t)
 
-    # Console view: public page (/plugins/google/view) + gated data (/api/plugins/google/*).
+    # Console view + one-click OAuth connect: public page (/plugins/google/view,
+    # /plugins/google/oauth/callback) + gated data (/api/plugins/google/*).
     try:
         from . import gcal, gmail
         from .view import build_router
 
-        page, data = build_router(_creds, gmail, gcal)
+        page, data = build_router(
+            _creds, gmail, gcal,
+            scopes_fn=lambda: (registry.live_config() or {}).get("oauth_scopes", ""),
+            on_refresh_token=_set_refresh_token,
+        )
         registry.register_router(page)  # default prefix /plugins/google (public via public_paths)
         registry.register_router(data, prefix="/api/plugins/google")
     except Exception:  # noqa: BLE001 — view is best-effort

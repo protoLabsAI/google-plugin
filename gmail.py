@@ -56,6 +56,11 @@ def _body(payload: dict, limit: int = 8192) -> str:
     return html[:limit]
 
 
+def profile(creds: Creds, *, client=None) -> dict:
+    """The connected account's profile — {"emailAddress": ...}. Read-only."""
+    return request(creds, "GET", f"{BASE}/profile", client=client)
+
+
 def list_messages(creds: Creds, q: str, max_results: int, *, client=None) -> list[dict]:
     listing = request(creds, "GET", f"{BASE}/messages",
                       params={"q": q, "maxResults": min(int(max_results), 100)}, client=client)

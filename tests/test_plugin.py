@@ -117,7 +117,7 @@ def test_manifest_view_path_is_served_and_public():
 def test_data_routes_are_gated_prefix_and_degrade_unconfigured(monkeypatch):
     monkeypatch.setattr(plugin, "_CREDS", Creds("", "", ""))
     c = TestClient(_mounted_app())
-    assert c.get("/api/plugins/google/status").json() == {"configured": False}
+    assert c.get("/api/plugins/google/status").json() == {"configured": False, "has_client": False}
     assert c.get("/api/plugins/google/unread").json() == {"messages": []}
     assert c.get("/api/plugins/google/upcoming").json() == {"events": []}
 
