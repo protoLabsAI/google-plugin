@@ -2,13 +2,17 @@
 
 **Google Workspace** for a [protoAgent](https://github.com/protoLabsAI/protoAgent) agent — built to grow. Ships **Gmail (read + draft)**, **Calendar (read)**, and **Drive (read)** today over a service-agnostic OAuth/REST core, so Docs / Sheets / further services are additive modules, not a rewrite.
 
-Pull-mode posture: the agent lists, searches, reads, **drafts**, and can **mark mail read** — it never sends, archives, deletes, or auto-replies. A human reviews drafts in the Drafts folder and sends them.
+Pull-mode posture: the agent lists, searches, reads, **drafts**, and does **mailbox hygiene** (mark read, label, archive) — it never sends, deletes, or auto-replies. A human reviews drafts in the Drafts folder and sends them.
 
 ## Tools
 - `gmail_list_unread(label, max)` · `gmail_search(query, max)` · `gmail_get_thread(thread_id)` — read.
 - `gmail_create_draft(body, thread_id | to+subject, …)` — **draft only, never sends**.
-- `gmail_mark_read(message_ids | thread_id)` — clears UNREAD only; never archives/deletes.
+- `gmail_mark_read(message_ids | thread_id)` — clears UNREAD only.
+- `gmail_label(message_ids | thread_id, add, remove, archive)` — label by name (auto-creates), archive = remove INBOX; adding TRASH/SPAM refused.
+- `gmail_get_attachment(message_id, attachment_id, filename)` — text attachments return content; binaries save to the workspace. (`gmail_get_thread` now lists attachments.)
+- `gmail_list_drafts(max)` · `gmail_update_draft(draft_id, body, …)` — revise drafts; **still never sends**.
 - `calendar_list_upcoming(days, calendar_id)` · `calendar_event_detail(event_id, calendar_id)` — read.
+- `calendar_availability(days)` — free/busy blocks. · `calendar_search(query, days_back, days_ahead)` — text search.
 - `drive_search(query, max)` · `drive_read(file_id, max_chars)` — read; Docs export as text, Sheets as CSV, Slides as text.
 
 ## Architecture

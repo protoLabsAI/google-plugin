@@ -1,11 +1,10 @@
 id: google
 name: Google Workspace
-version: 0.3.0
+version: 0.4.0
 description: >-
-  Google Workspace for the agent, built to grow. Ships Gmail (read + draft),
-  Calendar (read), and Drive (read) today — gmail_list_unread, gmail_search,
-  gmail_get_thread, gmail_create_draft (DRAFT ONLY — never sends), gmail_mark_read,
-  calendar_list_upcoming, calendar_event_detail, drive_search, drive_read — over a
+  Google Workspace for the agent, built to grow. Gmail (read, draft-only — never
+  sends — plus mailbox hygiene: mark read, label, archive, attachments, draft
+  revision), Calendar (read + free/busy + search), Drive (read) — over a
   service-agnostic OAuth/REST core (no SDK) so Docs and Sheets are additive
   modules, not a rewrite. Pull-mode: the agent reads
   and drafts; a human reviews and sends. Needs a Google OAuth client + refresh token;
@@ -17,7 +16,7 @@ enabled: false
 min_protoagent_version: "0.71.0"  # manifest public_paths (#1345)
 capabilities:
   network: [oauth2.googleapis.com, gmail.googleapis.com, www.googleapis.com]
-  filesystem: none
+  filesystem: workspace (attachment downloads)
 
 # Console view (ADR 0026) — connection status + unread mail + upcoming events.
 # The page is public (browser iframe can't carry a bearer); its data is fetched
