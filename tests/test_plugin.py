@@ -67,6 +67,7 @@ def test_register_wires_tools_and_routers(registry):
         "gmail_search",
         "gmail_get_thread",
         "gmail_create_draft",
+        "gmail_mark_read",
         "calendar_list_upcoming",
         "calendar_event_detail",
         "drive_search",
@@ -101,6 +102,14 @@ def test_draft_tool_requires_target(monkeypatch):
     monkeypatch.setattr(plugin, "_CREDS", Creds("c", "s", "r"))
     out = plugin.gmail_create_draft.invoke({"body": "hi"})
     assert "thread_id" in out and "subject" in out
+
+
+def test_mark_read_tool_requires_target_and_reports_count(monkeypatch):
+    monkeypatch.setattr(plugin, "_CREDS", Creds("c", "s", "r"))
+    assert "message_ids" in plugin.gmail_mark_read.invoke({})
+    monkeypatch.setattr(gmail, "mark_read", lambda creds, ids, tid, **kw: {"marked": len(ids)})
+    out = plugin.gmail_mark_read.invoke({"message_ids": ["m1", "m2"]})
+    assert out == "Marked 2 message(s) read."
 
 
 # ── Console view (the four rules) ─────────────────────────────────────────────
