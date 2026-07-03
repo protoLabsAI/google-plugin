@@ -1,6 +1,6 @@
 id: google
 name: Google Workspace
-version: 0.1.0
+version: 0.2.0
 description: >-
   Google Workspace for the agent, built to grow. Ships Gmail (read + draft),
   Calendar (read), and Drive (read) today — gmail_list_unread, gmail_search,
