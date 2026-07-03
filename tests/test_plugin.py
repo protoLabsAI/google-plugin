@@ -86,6 +86,15 @@ def test_tools_hint_when_unconfigured(monkeypatch):
     assert "isn't configured" in out and "GOOGLE_CLIENT_ID" in out
 
 
+def test_list_unread_quotes_the_label(monkeypatch):
+    # An unquoted multi-word label would split into label:Priority + free-text "Inbox".
+    monkeypatch.setattr(plugin, "_CREDS", Creds("c", "s", "r"))
+    seen = {}
+    monkeypatch.setattr(gmail, "list_messages", lambda creds, q, mx, **kw: seen.update(q=q) or [])
+    plugin.gmail_list_unread.invoke({"label": "Priority Inbox"})
+    assert seen["q"] == 'label:"Priority Inbox" is:unread'
+
+
 def test_draft_tool_requires_target(monkeypatch):
     monkeypatch.setattr(plugin, "_CREDS", Creds("c", "s", "r"))
     out = plugin.gmail_create_draft.invoke({"body": "hi"})

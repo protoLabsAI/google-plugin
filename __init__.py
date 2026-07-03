@@ -70,7 +70,10 @@ def gmail_list_unread(label: str = "INBOX", max: int = 20) -> str:
     """
     from . import gmail
 
-    out = _run(gmail.list_messages, _creds(), f"label:{label} is:unread", max)
+    # Quote the label: an unquoted multi-word label ("Priority Inbox") would split
+    # into label:Priority + free-text "Inbox" in Gmail's query syntax.
+    quoted = '"%s"' % label.replace('"', "")
+    out = _run(gmail.list_messages, _creds(), f"label:{quoted} is:unread", max)
     return out if isinstance(out, str) else json.dumps({"label": label, "count": len(out), "messages": out}, indent=2)
 
 

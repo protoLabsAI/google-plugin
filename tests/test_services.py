@@ -154,3 +154,68 @@ def test_calendar_list_and_detail(client):
     assert detail["description"] == "daily"
     assert detail["attendees"][0] == {"email": "a@x.com", "name": "Al", "status": "accepted"}
     assert detail["organizer"]["email"] == "o@x.com"
+
+
+# ── Error surfacing + 401 retry ───────────────────────────────────────────────
+
+
+def test_api_error_surfaces_googles_message():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "oauth2.googleapis.com":
+            return httpx.Response(200, json={"access_token": "at", "expires_in": 3600})
+        return httpx.Response(
+            403,
+            json={
+                "error": {
+                    "code": 403,
+                    "message": "Request had insufficient authentication scopes.",
+                    "status": "PERMISSION_DENIED",
+                }
+            },
+        )
+
+    auth._TOKEN_CACHE.clear()
+    with httpx.Client(transport=httpx.MockTransport(handler)) as c:
+        with pytest.raises(GoogleError, match="403.*insufficient authentication scopes"):
+            auth.request(CREDS, "GET", "https://gmail.googleapis.com/gmail/v1/users/me/messages", client=c)
+
+
+def test_token_refresh_error_is_readable_and_hints_reconnect():
+    resp = httpx.Response(
+        400, json={"error": "invalid_grant", "error_description": "Token has been expired or revoked."}
+    )
+    auth._TOKEN_CACHE.clear()
+    with httpx.Client(transport=httpx.MockTransport(lambda r: resp)) as c:
+        with pytest.raises(GoogleError, match="expired or revoked.*[Rr]econnect"):
+            auth.get_access_token(CREDS, client=c)
+
+
+def test_401_retries_once_with_a_fresh_token():
+    counts = {"token": 0, "data": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "oauth2.googleapis.com":
+            counts["token"] += 1
+            return httpx.Response(200, json={"access_token": f"at-{counts['token']}", "expires_in": 3600})
+        counts["data"] += 1
+        if request.headers["Authorization"] == "Bearer at-1":  # first (revoked) token
+            return httpx.Response(401, json={"error": {"code": 401, "message": "Invalid Credentials"}})
+        return httpx.Response(200, json={"ok": True})
+
+    auth._TOKEN_CACHE.clear()
+    with httpx.Client(transport=httpx.MockTransport(handler)) as c:
+        out = auth.request(CREDS, "GET", "https://gmail.googleapis.com/gmail/v1/users/me/profile", client=c)
+    assert out == {"ok": True}
+    assert counts == {"token": 2, "data": 2}  # one invalidation, one retry — no loop
+
+
+def test_401_gives_up_after_one_retry():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "oauth2.googleapis.com":
+            return httpx.Response(200, json={"access_token": "at", "expires_in": 3600})
+        return httpx.Response(401, json={"error": {"code": 401, "message": "Invalid Credentials"}})
+
+    auth._TOKEN_CACHE.clear()
+    with httpx.Client(transport=httpx.MockTransport(handler)) as c:
+        with pytest.raises(GoogleError, match="401.*Invalid Credentials"):
+            auth.request(CREDS, "GET", "https://gmail.googleapis.com/gmail/v1/users/me/profile", client=c)
