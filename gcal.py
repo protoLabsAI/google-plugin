@@ -11,7 +11,8 @@ from datetime import datetime, timedelta, timezone
 
 from .auth import Creds, request
 
-BASE = "https://www.googleapis.com/calendar/v3/calendars"
+API = "https://www.googleapis.com/calendar/v3"
+BASE = f"{API}/calendars"
 
 
 def _summary(e: dict) -> dict:
@@ -34,6 +35,35 @@ def list_upcoming(creds: Creds, days: int = 7, calendar_id: str = "primary",
         "timeMin": start.isoformat(),
         "timeMax": (start + timedelta(days=min(int(days), 90))).isoformat(),
         "singleEvents": "true", "orderBy": "startTime", "maxResults": 50,
+    }, client=client)
+    return [_summary(e) for e in (data.get("items") or [])]
+
+
+def free_busy(creds: Creds, days: int = 7, calendar_id: str = "primary",
+              *, client=None, now_iso: str | None = None) -> dict:
+    """Busy blocks over the next N days — the agent derives free slots from the gaps."""
+    start = datetime.now(timezone.utc) if now_iso is None else datetime.fromisoformat(now_iso)
+    end = start + timedelta(days=min(int(days), 90))
+    data = request(creds, "POST", f"{API}/freeBusy", json={
+        "timeMin": start.isoformat(), "timeMax": end.isoformat(), "items": [{"id": calendar_id}],
+    }, client=client)
+    cal = (data.get("calendars") or {}).get(calendar_id) or {}
+    out = {"timeMin": start.isoformat(), "timeMax": end.isoformat(), "busy": cal.get("busy") or []}
+    if cal.get("errors"):
+        out["errors"] = cal["errors"]
+    return out
+
+
+def search_events(creds: Creds, query: str, days_back: int = 30, days_ahead: int = 180,
+                  calendar_id: str = "primary", max_results: int = 20,
+                  *, client=None, now_iso: str | None = None) -> list[dict]:
+    """Text search over events in a window around now (past and future)."""
+    now = datetime.now(timezone.utc) if now_iso is None else datetime.fromisoformat(now_iso)
+    data = request(creds, "GET", f"{BASE}/{calendar_id}/events", params={
+        "q": query,
+        "timeMin": (now - timedelta(days=min(int(days_back), 365))).isoformat(),
+        "timeMax": (now + timedelta(days=min(int(days_ahead), 365))).isoformat(),
+        "singleEvents": "true", "orderBy": "startTime", "maxResults": min(int(max_results), 50),
     }, client=client)
     return [_summary(e) for e in (data.get("items") or [])]
 
