@@ -49,7 +49,8 @@ def _run(fn, *args, **kwargs):
 
     if not _creds().configured():
         return ("Google isn't configured. Set google.client_id / client_secret / refresh_token "
-                "(or GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN).")
+                "(or GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN). "
+                "Setup guide: https://github.com/protoLabsAI/google-plugin#connect-one-click-oauth")
     try:
         return fn(*args, **kwargs)
     except GoogleError as exc:

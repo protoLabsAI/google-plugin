@@ -53,7 +53,7 @@ PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
       ? '<span class="pl-badge pl-badge--success">connected' + (s.email ? " — " + esc(s.email) : "") + '</span>'
       : (s.has_client
         ? '<button class="pl-btn pl-btn--primary" id="connect">Connect Google</button>'
-        : '<span class="pl-badge pl-badge--error">set client_id / client_secret in Settings ▸ Plugins ▸ Google</span>');
+        : '<span class="pl-badge pl-badge--error"><a href="https://github.com/protoLabsAI/google-plugin#connect-one-click-oauth" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">set client_id / client_secret in Settings ▸ Plugins ▸ Google</a></span>');
     let rows = '<div class="row"><span class="k">Account</span>' + badge + '</div>';
     if (s.configured) rows += '<div class="row"><span class="k"></span><button class="pl-btn" id="connect">Reconnect</button></div>';
     return rows;
