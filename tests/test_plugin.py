@@ -96,6 +96,8 @@ def test_tools_hint_when_unconfigured(monkeypatch):
     monkeypatch.setattr(plugin, "_CREDS", Creds("", "", ""))
     out = plugin.gmail_list_unread.invoke({})
     assert "isn't configured" in out and "GOOGLE_CLIENT_ID" in out
+    # The hint points the agent at the README OAuth setup section (bare URL, not HTML).
+    assert "https://github.com/protoLabsAI/google-plugin#connect-one-click-oauth" in out
 
 
 def test_list_unread_quotes_the_label(monkeypatch):
@@ -158,3 +160,12 @@ def test_page_is_four_rules_compliant():
     assert "apiFetch" in page  # authed fetch via the kit
     assert ":root{" not in page and ":root {" not in page  # no hand-rolled theme map
     assert 'addEventListener("message"' not in page  # kit owns the handshake
+
+
+def test_setup_badge_links_to_readme_oauth_guide():
+    # The "no client" badge tells the operator what to set AND links to how (README).
+    page = view.PAGE
+    href = "https://github.com/protoLabsAI/google-plugin#connect-one-click-oauth"
+    assert 'class="pl-badge pl-badge--error"' in page  # keeps the DS badge classes
+    assert f'href="{href}"' in page  # the badge text is wrapped in an <a> to the guide
+    assert "color:inherit" in page  # readable on the error badge background
